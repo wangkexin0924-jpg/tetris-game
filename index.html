@@ -7,15 +7,16 @@
 <style>
   :root{color-scheme:dark;--bg:#10131d;--panel:#1a1f2e;--line:#31394f;--ink:#eef1fa;--muted:#9ca7c2;--accent:#8b7cff}
   *{box-sizing:border-box} body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 20% 10%,#26214b 0,transparent 32%),var(--bg);font-family:system-ui,-apple-system,"PingFang SC",sans-serif;color:var(--ink)}
-  .game{display:flex;gap:20px;align-items:flex-start;padding:22px;max-width:100%} canvas{display:block;border:1px solid var(--line);border-radius:8px;background:#0b0e16;box-shadow:0 14px 35px #0007}.side{width:150px}.brand{margin:0 0 14px;font-size:18px;letter-spacing:.04em}.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px}.label{color:var(--muted);font-size:12px;margin-bottom:3px}.value{font-size:24px;font-weight:700}.next-wrap{display:grid;place-items:center;height:112px}.next-wrap canvas{border:0;box-shadow:none;background:transparent}button{width:100%;border:0;border-radius:7px;padding:10px;background:var(--accent);color:white;font-weight:700;font:inherit;cursor:pointer}button:hover{filter:brightness(1.1)}.help{font-size:12px;line-height:1.75;color:var(--muted);margin:0}.touch{display:none}
-  @media(max-width:540px){.game{gap:11px;padding:12px;transform:scale(.92);transform-origin:center}.side{width:130px}.brand{font-size:19px}} @media(max-width:390px){.game{transform:scale(.78);margin:-35px}.side{width:124px}}
+  .game{display:flex;flex-direction:column;align-items:center;padding:22px;max-width:100%}.game-row{display:flex;gap:20px;align-items:flex-start}canvas{display:block;border:1px solid var(--line);border-radius:8px;background:#0b0e16;box-shadow:0 14px 35px #0007}.side{width:150px}.brand{margin:0 0 14px;font-size:24px;letter-spacing:.06em;text-align:center}.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px}.label{color:var(--muted);font-size:12px;margin-bottom:3px}.value{font-size:24px;font-weight:700}.next-wrap{display:grid;place-items:center;height:112px}.next-wrap canvas{border:0;box-shadow:none;background:transparent}button{width:100%;border:0;border-radius:7px;padding:10px;background:var(--accent);color:white;font-weight:700;font:inherit;cursor:pointer}button:hover{filter:brightness(1.1)}.help{font-size:12px;line-height:1.75;color:var(--muted);margin:0}.touch{display:none}
+  @media(max-width:540px){.game{padding:12px;transform:scale(.92);transform-origin:center}.game-row{gap:11px}.side{width:130px}.brand{font-size:19px}} @media(max-width:390px){.game{transform:scale(.78);margin:-35px}.side{width:124px}}
 </style>
 </head>
 <body>
 <main class="game" aria-label="俄罗斯方块小游戏">
+  <h1 class="brand">辣辣俄罗斯方块</h1>
+  <div class="game-row">
   <canvas id="board" width="300" height="600" aria-label="游戏棋盘"></canvas>
   <aside class="side">
-    <h1 class="brand">辣辣俄罗斯方块</h1>
     <section class="panel"><div class="label">分数</div><div class="value" id="score">0</div></section>
     <section class="panel"><div class="label">关卡</div><div class="value" id="level">1</div></section>
     <section class="panel"><div class="label">本关目标</div><div class="value"><span id="stageLines">0</span>/<span id="target">5</span></div></section>
@@ -23,8 +24,9 @@
     <section class="panel"><div class="label">下一个</div><div class="next-wrap"><canvas id="next" width="112" height="92"></canvas></div></section>
     <button id="pause">暂停游戏</button>
     <button id="restart" style="margin-top:8px">重新开始</button>
-    <section class="panel" style="margin-top:10px"><p class="help">← → 移动<br>↑ 旋转　↓ 加速<br>空格：直接落下<br>P：暂停</p></section>
+    <section class="panel" style="margin-top:10px"><p class="help">← → 移动<br>↑ 旋转　↓ 加速<br>Enter：直接落下<br>空格：暂停</p></section>
   </aside>
+  </div>
 </main>
 <script>
 (() => {
@@ -45,7 +47,7 @@
   function reset(){grid=Array.from({length:H},()=>Array(W).fill(0));score=lines=stageLines=0;level=1;target=5;over=paused=stageMessage=false;next=rand();spawn();updateUI();last=performance.now();draw()}
   function loop(t){if(!paused&&!over&&!stageMessage&&t-last>Math.max(100,800-(level-1)*65)){fall();last=t}draw();requestAnimationFrame(loop)}
   function togglePause(){if(!over&&!stageMessage){paused=!paused;updateUI();draw()}}
-  addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp',' '].includes(e.key))e.preventDefault();if(e.key.toLowerCase()==='p'){togglePause();return}if(paused||over)return;if(e.key==='ArrowLeft'&&!collide(cur,-1))cur.x--;if(e.key==='ArrowRight'&&!collide(cur,1))cur.x++;if(e.key==='ArrowDown')fall();if(e.key==='ArrowUp')rotate();if(e.key===' '){while(!collide(cur,0,1))cur.y++;lock()}draw()});
+  addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp',' ','Enter'].includes(e.key))e.preventDefault();if(e.key===' '||e.key.toLowerCase()==='p'){togglePause();return}if(paused||over)return;if(e.key==='ArrowLeft'&&!collide(cur,-1))cur.x--;if(e.key==='ArrowRight'&&!collide(cur,1))cur.x++;if(e.key==='ArrowDown')fall();if(e.key==='ArrowUp')rotate();if(e.key==='Enter'){while(!collide(cur,0,1))cur.y++;lock()}draw()});
   document.querySelector('#pause').onclick=togglePause; document.querySelector('#restart').onclick=reset; reset(); requestAnimationFrame(loop);
 })();
 </script>
